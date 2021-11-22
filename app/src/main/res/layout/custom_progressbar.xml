@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ce layout sera appelé à chaque fois que nous aurons besoin d'afficher une progressBar-->
+<!-- L'opacité se fait en choisissant la couleur blanche en haxadécimal (#ffffff) précédée de 33
+     soit #33ffffff pour l'attribut backgroung-->
+<!-- On ajoute l'élévation pour que cette progressBar s'affiche toujours au dessus de tous les autres éléments -->
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#33ffffff"
+    android:elevation="16dp">
+
+<!--  L'ajout de Gravity à center fais que toutes les vues à l'intérieur de ce layout sont centrées  -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/tvProgressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/loading_please_wait"
+            android:textColor="@color/colorSecondary" />
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

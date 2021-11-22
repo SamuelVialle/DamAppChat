@@ -1,0 +1,85 @@
+{
+  "project_info": {
+    "project_number": "88313206635",
+    "firebase_url": "https://chat-dam-d8474-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "chat-dam-d8474",
+    "storage_bucket": "chat-dam-d8474.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:88313206635:android:ceb2c48eaf78712e0e1e2e",
+        "android_client_info": {
+          "package_name": "com.samuelvialle.damappchat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "88313206635-gtntsntloemut416pcerpsn7m9qsnajv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.samuelvialle.damappchat",
+            "certificate_hash": "c17b3a7820a9596801bff1d3573ee7f101e63e1b"
+          }
+        },
+        {
+          "client_id": "88313206635-vsrq0njd85sdsrakavfftchg3sj29qqv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDyZotkI64Yo7TFUTR3spGqjy8f8XC70U0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "88313206635-vsrq0njd85sdsrakavfftchg3sj29qqv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:88313206635:android:b8b07efbfd9862ac0e1e2e",
+        "android_client_info": {
+          "package_name": "com.samuelvialle.damchat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "88313206635-vvvp5nr8bsn223nbqbv68men693smmfo.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.samuelvialle.damchat",
+            "certificate_hash": "c17b3a7820a9596801bff1d3573ee7f101e63e1b"
+          }
+        },
+        {
+          "client_id": "88313206635-vsrq0njd85sdsrakavfftchg3sj29qqv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDyZotkI64Yo7TFUTR3spGqjy8f8XC70U0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "88313206635-vsrq0njd85sdsrakavfftchg3sj29qqv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

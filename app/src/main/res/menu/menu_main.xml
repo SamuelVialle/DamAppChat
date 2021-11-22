@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- On ajoute un item, pour afficher le profile, dans l'actionBar,
+    avec comme attribut ifRoom ...
+    https://developer.android.com/guide/topics/resources/menu-resource
+    Ajout de l'icône qui remplacera le texte New vector asset -->
+    <item
+        android:id="@+id/mnuProfile"
+        android:title="@string/profile"
+        app:showAsAction="ifRoom"
+        android:icon="@drawable/ic_user"/>
+</menu>

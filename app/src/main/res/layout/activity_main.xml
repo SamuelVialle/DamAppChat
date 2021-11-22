@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--    Dans ce design on va utiliser un tablayout qui va servir de menu pour afficher les fragments-->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <!-- A ajouter après  -->
+    <include
+        layout="@layout/custom_progressbar"
+        android:id="@+id/progressBar"
+        android:visibility="gone"/>
+
+<!--    Vertical Linear fixé à 0dp // 0dp-->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+<!--        Ajout du Tablayout  avec height à wrap pour qu'il soit fixé en haut
+            Suppression des TabItem pour ajouter par la suite une custom view qui permettra l'usage de
+            différents graphisme en fonction du tab sélectionné -->
+        <com.google.android.material.tabs.TabLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/tabMain"
+            android:background="@color/colorPrimary"
+            app:tabIndicator="@color/black">
+<!-- TabIndicator sert à forcer la couleur du texte et des icones -->
+
+        </com.google.android.material.tabs.TabLayout>
+
+<!--        Ajout d'un viewPager dans lequel on va afficher les différents fragments-->
+        <androidx.viewpager.widget.ViewPager
+            android:id="@+id/vpMain"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="8dp"/>
+    </LinearLayout>
+
+<!--   Création de la customView > Clic droit sur Layout -> New Resource File -->
+</androidx.constraintlayout.widget.ConstraintLayout>
