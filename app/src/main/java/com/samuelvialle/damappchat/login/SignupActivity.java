@@ -11,6 +11,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.util.Patterns;
 import android.view.KeyEvent;
 import android.view.View;
@@ -28,9 +29,8 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreSettings;
 import com.google.firebase.storage.FirebaseStorage;
@@ -59,11 +59,7 @@ public class SignupActivity extends AppCompatActivity {
      */
     private FirebaseUser firebaseUser;
     /**
-     * 6.1 Ajout de la variable de liaison avec RealtimeDataBase
-     **/
-    private DatabaseReference databaseReference;
-    /**
-     * 6+ Ajout de la variable de liaison avec les collections du Cloud FireStore
+     * 6.1 Ajout de la variable de liaison avec les collections du Cloud FireStore
      **/
     private CollectionReference collectionReference; // Le reste est dans la méthode initFireStore
     /**
@@ -79,6 +75,7 @@ public class SignupActivity extends AppCompatActivity {
      * 7.6 Variable pour la localisation de l'ImageView
      */
     private ImageView ivAvatar;
+    private String userID;
     /**
      * 11 Ajout de la progressBar
      **/
@@ -98,12 +95,20 @@ public class SignupActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
     }
 
+    private void initFirebase(){
+        /** 6.2 Insertion dans Firestore **/
+        collectionReference = FirebaseFirestore
+                .getInstance() // Obtient une instance de connexion à la db
+                .collection(NodesNames.USERS); // La référence equi vient de la classe NodesNames
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login_signup);
         /** 3 Appel de la méthode initUI **/
         initUI();
+        initFirebase();
 
         /** 7.2 Initialisation du bucket pour le stockage des avatars utilisateurs **/
         fileStorage = FirebaseStorage.getInstance().getReference();
@@ -165,6 +170,8 @@ public class SignupActivity extends AppCompatActivity {
                                     /** 5.2 Association de l'utilisateur courant à FirebaseUser dans le cadre du
                                      * changement de nom **/
                                     firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+                                    userID = firebaseUser.getUid();
+                                    Log.i(TAG, "User creation " + userID);
 //                               // Affichage d'un toast de réussite
 //                               Toast.makeText(SignupActivity.this, R.string.user_created_successfully, Toast.LENGTH_SHORT).show();
 //                               // Lancement de l'activité suivante
@@ -228,24 +235,17 @@ public class SignupActivity extends AppCompatActivity {
                         // 11.6 ProgressBar
                         progressBar.setVisibility(View.GONE);
                         if (task.isSuccessful()) {
-                            String userID = firebaseUser.getUid();
-                            /** 6.2 Insertion dans la Realtime database **/
-                            databaseReference = FirebaseDatabase
-                                    .getInstance() // Obtient une instance de connexion à la db
-                                    .getReference() // Cherche la référence souhaitée à partir de la racine de la db
-                                    .child(NodesNames.USERS); // La référence en question qui vient de la classe NodesNames
-
                             // Création du HashMap pour la gestion des données
                             HashMap<String, String> hashMap = new HashMap<>();
                             hashMap.put(NodesNames.NAME, etName.getText().toString().trim());
                             hashMap.put(NodesNames.EMAIL, etEmail.getText().toString().trim());
                             hashMap.put(NodesNames.ONLINE, "true"); // User set ONLINE, true, car il est dans on profile
                             hashMap.put(NodesNames.AVATAR, ""); // Vide pour le moment
-
+                            Log.i(TAG, "Name only " + userID);
                             // 11.7 ProgressBar
                             progressBar.setVisibility(View.VISIBLE);
                             // Envoie des données vers Realtime db
-                            databaseReference.child(userID).setValue(hashMap)
+                            collectionReference.document(userID).set(hashMap)
                                     // On vérifie le bon déroulement avec .addOnCompleteListener()
                                     // Si tout se passe bien l'utilisateur est dirigé vers la page de login
                                     // A noter qu'il faut rappeler le contexte (l'endroit où s'exécute la méthode
@@ -353,58 +353,60 @@ public class SignupActivity extends AppCompatActivity {
                             // On récupére l'url de l'image uploadée
                             fileRef.getDownloadUrl().addOnSuccessListener(SignupActivity.this,
                                     new OnSuccessListener<Uri>() {
-                                @Override
-                                public void onSuccess(Uri uri) {
-                                    serverFileUri = uri;
-                                    UserProfileChangeRequest request = new UserProfileChangeRequest.Builder()
-                                            .setDisplayName(etName.getText().toString().trim())
-                                            .setPhotoUri(serverFileUri)
-                                            .build();
+                                        @Override
+                                        public void onSuccess(Uri uri) {
+                                            serverFileUri = uri;
+                                            UserProfileChangeRequest request = new UserProfileChangeRequest.Builder()
+                                                    .setDisplayName(etName.getText().toString().trim())
+                                                    .setPhotoUri(serverFileUri)
+                                                    .build();
 
-                                    firebaseUser.updateProfile(request)
-                                            .addOnCompleteListener(new OnCompleteListener<Void>() {
-                                                @Override
-                                                public void onComplete(@NonNull @org.jetbrains.annotations.NotNull Task<Void> task) {
-                                                    if (task.isSuccessful()) {
-                                                        String userID = firebaseUser.getUid();
-                                                        databaseReference = FirebaseDatabase.getInstance().getReference().child(NodesNames.USERS);
+                                            firebaseUser.updateProfile(request)
+                                                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                        @Override
+                                                        public void onComplete(@NonNull @org.jetbrains.annotations.NotNull Task<Void> task) {
+                                                            if (task.isSuccessful()) {
+                                                                String userID = firebaseUser.getUid();
 
-                                                        HashMap<String, String> hashMap = new HashMap<>();
+                                                                HashMap<String, String> hashMap = new HashMap<>();
 
-                                                        hashMap.put(NodesNames.NAME, etName.getText().toString().trim());
-                                                        hashMap.put(NodesNames.EMAIL, etEmail.getText().toString().trim());
-                                                        hashMap.put(NodesNames.ONLINE, "true");
-                                                        hashMap.put(NodesNames.AVATAR, serverFileUri.getPath());
+                                                                hashMap.put(NodesNames.NAME, etName.getText().toString().trim());
+                                                                hashMap.put(NodesNames.EMAIL, etEmail.getText().toString().trim());
+                                                                hashMap.put(NodesNames.ONLINE, "true");
+                                                                hashMap.put(NodesNames.AVATAR, serverFileUri.getPath());
 
-                                                        databaseReference.child(userID).setValue(hashMap)
-                                                                .addOnCompleteListener(SignupActivity.this, new OnCompleteListener<Void>() {
-                                                                    @Override
-                                                                    public void onComplete(@NonNull @org.jetbrains.annotations.NotNull Task<Void> task) {
-                                                                        Toast.makeText(SignupActivity.this, R.string.user_created_successfully, Toast.LENGTH_SHORT).show();
-                                                                        startActivity(new Intent(SignupActivity.this, LoginActivity.class));
-                                                                    }
-                                                                });
+                                                                Log.i(TAG, "Name and picture : " + userID);
 
-                                                    } else {
-                                                        Toast.makeText(SignupActivity.this,
-                                                                getString(R.string.nameUpdateFailed, task.getException()),
-                                                                Toast.LENGTH_SHORT).show();
-                                                    }
-                                                }
-                                            });
-                                }
-                            });
+                                                                collectionReference.document(userID).set(hashMap)
+                                                                        .addOnCompleteListener(SignupActivity.this, new OnCompleteListener<Void>() {
+                                                                            @Override
+                                                                            public void onComplete(@NonNull Task<Void> task) {
+                                                                                Toast.makeText(SignupActivity.this, R.string.user_created_successfully, Toast.LENGTH_SHORT).show();
+                                                                                startActivity(new Intent(SignupActivity.this, LoginActivity.class));
+                                                                            }
+                                                                        });
+                                                            } else {
+                                                                Toast.makeText(SignupActivity.this,
+                                                                        getString(R.string.nameUpdateFailed, task.getException()),
+                                                                        Toast.LENGTH_SHORT).show();
+                                                            }
+                                                        }
+                                                    });
+                                        }
+                                    });
                         }
                     }
                 });
     }
 
-    /** 12 Ajout des boutons next et send à la place du retour chariot du keyboard **/
+    /**
+     * 12 Ajout des boutons next et send à la place du retour chariot du keyboard
+     **/
     private TextView.OnEditorActionListener editorActionListener = new TextView.OnEditorActionListener() {
         @Override
         public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
             // Utilisation de actionId qui correspond à l'action ajouter dans le xml
-            switch (actionId){
+            switch (actionId) {
                 case EditorInfo.IME_ACTION_DONE:
                     btnSignupClick(v);
             }

@@ -8,13 +8,14 @@
         <entry key="..\:/OneDrive/Documents/AppAndroidStudio/DamAppChat/app/src/main/res/drawable/ic_chat.xml" value="0.42552083333333335" />
         <entry key="..\:/OneDrive/Documents/AppAndroidStudio/DamAppChat/app/src/main/res/drawable/ic_launcher_foreground.xml" value="0.42552083333333335" />
         <entry key="..\:/OneDrive/Documents/AppAndroidStudio/DamAppChat/app/src/main/res/layout/activity_login_login.xml" value="0.3723958333333333" />
+        <entry key="..\:/OneDrive/Documents/AppAndroidStudio/DamAppChat/app/src/main/res/menu/menu_add_avatar.xml" value="0.4" />
         <entry key="..\:/OneDrive/Documents/AppAndroidStudio/DamAppChat/app/src/main/res/menu/menu_avatar.xml" value="0.409375" />
         <entry key="..\:/OneDrive/Documents/AppAndroidStudio/DamAppChat/app/src/main/res/menu/menu_main.xml" value="0.409375" />
         <entry key="..\:/OneDrive/Documents/AppAndroidStudio/DamAppChat/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.42552083333333335" />
       </map>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" default="true" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" project-jdk-name="1.8" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
   <component name="ProjectType">

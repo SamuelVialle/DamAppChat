@@ -50,4 +50,6 @@
     <string name="no_internet">Check Internet Connection</string>
     <string name="login_failed">Login failed : %1$s</string>
     <string name="image_has_been_deleted">Image has been deleted</string>
+    <string name="add_avatar_from_gallery">Select an avatar from the galery</string>
+    <string name="add_avatar_from_camera">Take a photo</string>
 </resources>

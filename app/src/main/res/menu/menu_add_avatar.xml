@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ce menu simple composé de 2 Menu Item, propose à l'utilisateur de modifier ou de supprimer
+l'image de l'avatar de son compte -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Modification -->
+    <item
+        android:id="@+id/mnuAddAvatarFromGallery"
+        android:title="@string/add_avatar_from_gallery" />
+    <!-- Suppresion -->
+    <item
+        android:id="@+id/mnuAddAvatarFromCamera"
+        android:title="@string/add_avatar_from_camera" />
+</menu>

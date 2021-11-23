@@ -33,6 +33,9 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -43,9 +46,11 @@ import com.samuelvialle.damappchat.login.LoginActivity;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.HashMap;
 
 public class ProfileActivity extends AppCompatActivity {
+    private static final String TAG = "###### Profile Activity";
     /**
      * 1.1 Variables globales des widgets
      **/
@@ -57,7 +62,7 @@ public class ProfileActivity extends AppCompatActivity {
      * 1.2 Variables globales de Firebase
      **/
     private FirebaseUser firebaseUser;
-    private DatabaseReference databaseReference;
+    private DocumentReference userReference;
     private StorageReference fileStorage;
     private FirebaseAuth firebaseAuth;
 
@@ -65,6 +70,8 @@ public class ProfileActivity extends AppCompatActivity {
      * 1.3 Variables globales pour les URI
      **/
     private Uri localFileUri, serverFileUri;
+    /** 1.3.1 Var du UserId **/
+    private String userID;
 
     /** 13 Définitions des variables pour tester avant l'envoi de l'update **/
     String nameToUpdate, emailToUpdate;
@@ -77,6 +84,7 @@ public class ProfileActivity extends AppCompatActivity {
         etName = findViewById(R.id.etName);
         ivAvatar = findViewById(R.id.ivAvatar);
         progressBar = findViewById(R.id.progressBar); //PB2
+
     }
 
     /**
@@ -89,6 +97,14 @@ public class ProfileActivity extends AppCompatActivity {
         firebaseAuth = FirebaseAuth.getInstance(); // Utilisé pour se déconnecter
         firebaseUser = firebaseAuth.getCurrentUser();
         // Si l'utilisateur n'est pas vide alors on rempli les champs
+        // Gestion du userID
+        userID = firebaseUser.getUid();
+        /** 6.2 Insertion dans la base de données **/
+        userReference = FirebaseFirestore
+                .getInstance() // Obtient une instance de connexion à la db
+                .collection(NodesNames.USERS) // Cherche la référence souhaitée à partir de la racine de la db
+                .document(userID);// L'id de l'utilisateur courant pour être modifié
+        Log.i(TAG, "initFirebase: " + userID);
     }
 
     private void initProfileUser() {
@@ -117,9 +133,6 @@ public class ProfileActivity extends AppCompatActivity {
                         .into(ivAvatar); // A quel endroit ? Dans le widget ivAvatar
             }
         }
-        // Définition des var pour tester l'envoi
-        nameToUpdate = etName.getText().toString().trim();
-        emailToUpdate = etEmail.getText().toString().trim();
     }
 
     @Override
@@ -144,12 +157,13 @@ public class ProfileActivity extends AppCompatActivity {
     private void updateNameOnly() {
         // PB3
         progressBar.setVisibility(View.VISIBLE);
+        nameToUpdate = etName.getText().toString().trim();
+        emailToUpdate = etEmail.getText().toString().trim();
         // Utilisation de la méthode UserProfileChangeRequest pour charger le nom de l'utilisateur
         // qui s'est enregistré
         UserProfileChangeRequest request = new UserProfileChangeRequest.Builder()
                 .setDisplayName(etName.getText().toString().trim())
                 .build();
-
         /** 5.3 Update du nom du profile utilisateur à partir de l'editText  **/
         firebaseUser.updateProfile(request)
                 // Ajout d'un listener qui affiche un Toast si tout c'est bien déroulé
@@ -160,24 +174,18 @@ public class ProfileActivity extends AppCompatActivity {
                         progressBar.setVisibility(View.GONE);
                         // Tout c'est bien passé
                         if (task.isSuccessful()) {
-                            String userID = firebaseUser.getUid();
-                            /** 6.2 Insertion dans la base de données **/
-                            databaseReference = FirebaseDatabase
-                                    .getInstance() // Obtient une instance de connexion à la db
-                                    .getReference() // Cherche la référence souhaitée à partir de la racine de la db
-                                    .child(NodesNames.USERS) // La référence en question qui vient de la classe NodesNames
-                                    .child(userID); // L'id de l'utilisateur courant pour être modifié
-
                             // Insertion dans la bd à l'aide d'un hashmap
                             HashMap<String, Object> hashMap = new HashMap<>();
                             if (firebaseUser.getDisplayName() != nameToUpdate) {
                                 hashMap.put(NodesNames.NAME, nameToUpdate);
-                            } else if (firebaseUser.getEmail() != emailToUpdate) {
-                                hashMap.put(NodesNames.EMAIL, etEmail.getText().toString().trim());
+                            }
+                            if (firebaseUser.getEmail() != emailToUpdate) {
+                                // TODO setEmail dans Authenticator, car dans cette configuration l'email ne change que dans la db
+                                hashMap.put(NodesNames.EMAIL, emailToUpdate);
                             }
 
                             // Envoie des données vers la db
-                            databaseReference.updateChildren(hashMap)
+                            userReference.set(hashMap, SetOptions.merge())
                                     // On vérifie le bon déroulement avec .addOnCompleteListener()
                                     // Si tout se passe bien l'utilisateur est dirigé vers la page de login
                                     // A noter qu'il faut rappeler le contexte (l'endroit où s'exécute la méthode
@@ -188,7 +196,6 @@ public class ProfileActivity extends AppCompatActivity {
                                             finish();
                                         }
                                     });
-
                         } else {
                             // Il y a un problème
                             Toast.makeText(ProfileActivity.this,
@@ -231,20 +238,18 @@ public class ProfileActivity extends AppCompatActivity {
                                                     if (task.isSuccessful()) {
                                                         String userID = firebaseUser.getUid();
 
-                                                        databaseReference = FirebaseDatabase.getInstance().getReference()
-                                                                .child(NodesNames.USERS).child(userID);
-
                                                         HashMap<String, Object> hashMap = new HashMap<>();
                                                         // Testing var to update
                                                         if (firebaseUser.getDisplayName() != nameToUpdate) {
                                                             hashMap.put(NodesNames.NAME, nameToUpdate);
                                                         } else if (firebaseUser.getEmail() != emailToUpdate) {
+                                                            // TODO setEmail ...
                                                             hashMap.put(NodesNames.EMAIL, etEmail.getText().toString().trim());
                                                         }
 
                                                         hashMap.put(NodesNames.AVATAR, serverFileUri.getPath());
 
-                                                        databaseReference.updateChildren(hashMap)
+                                                        userReference.set(hashMap, SetOptions.merge())
                                                                 .addOnCompleteListener(ProfileActivity.this, new OnCompleteListener<Void>() {
                                                                     @Override
                                                                     public void onComplete(@NonNull @org.jetbrains.annotations.NotNull Task<Void> task) {
@@ -327,15 +332,36 @@ public class ProfileActivity extends AppCompatActivity {
      * Ne pas oublier de lier le widget de l'image à cette méthode
      **/
     public void changeAvatar(View v) {
+        // Avant toute chose il faut ajouter le dossier menu dans le répertoire res
+        // Clic droit ...
+        //                                    Le contexte et la vue auqelle il est attaché
+        PopupMenu popupMenu = new PopupMenu(this, v);
         // On vérifie qu'il existe un avatar sur le compte
         if (serverFileUri == null) {
-            // Lancement de pickImage
-            pickImage();
+
+            popupMenu.getMenuInflater().inflate(R.menu.menu_add_avatar, popupMenu.getMenu());
+            // Ajout d'un listener pour savoir sur quel item l'utilisateur à cliquer
+            popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem item) {
+                    // On, récupère l'id de l'item cliquer
+                    int id = item.getItemId();
+
+                    // En fonction du résultat, lancement de l'action appropriée
+                    if (id == R.id.mnuAddAvatarFromGallery) {
+                        pickImage();
+                    } else if (id == R.id.mnuAddAvatarFromCamera) {
+                        /// A MODIFIER !!!!!
+                        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                        startActivity(intent);
+                    }
+                    return false;
+                }
+            });
+            popupMenu.show();
+
         } else { // Sinon l'utilisateur peut remplacer l'image ou la supprimer via un popupmenu
-            // Avant toute chose il faut ajouter le dossier menu dans le répertoire res
-            // Clic droit ...
-            //                                    Le contexte et la vue auqelle il est attaché
-            PopupMenu popupMenu = new PopupMenu(this, v);
+
             // Utilisation du menu_avatar pour remplir (souffler) le pop-up, l'affichage se fait dans son parent
             popupMenu.getMenuInflater().inflate(R.menu.menu_avatar, popupMenu.getMenu());
             // Ajout d'un listener pour savoir sur quel item l'utilisateur à cliquer
@@ -356,7 +382,6 @@ public class ProfileActivity extends AppCompatActivity {
                 }
             });
             popupMenu.show();
-
         }
     }
 
@@ -376,13 +401,12 @@ public class ProfileActivity extends AppCompatActivity {
                     public void onComplete(@NonNull @org.jetbrains.annotations.NotNull Task<Void> task) {
                         if (task.isSuccessful()) {
                             String userID = firebaseUser.getUid();
-                            databaseReference = FirebaseDatabase.getInstance().getReference().child(NodesNames.USERS);
 
                             HashMap<String, String> hashMap = new HashMap<>();
                             // On rempli la base Users avec du vide
                             hashMap.put(NodesNames.AVATAR, "");
 
-                            databaseReference.child(userID).setValue(hashMap)
+                            userReference.set(hashMap, SetOptions.merge())
                                     .addOnCompleteListener(ProfileActivity.this, new OnCompleteListener<Void>() {
                                         @Override
                                         public void onComplete(@NonNull @org.jetbrains.annotations.NotNull Task<Void> task) {

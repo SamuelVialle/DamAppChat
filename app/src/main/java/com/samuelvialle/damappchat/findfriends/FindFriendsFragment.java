@@ -14,14 +14,20 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.FirebaseOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.samuelvialle.damappchat.Common.NodesNames;
 import com.samuelvialle.damappchat.R;
 
@@ -48,7 +54,8 @@ public class FindFriendsFragment extends Fragment {
     private TextView tvEmptyFriendList;
 
     // Les variables pour la connextion à la db
-    // La référence vers la base
+    // La référence vers la collection
+    private CollectionReference friendRequestReference;
     private DatabaseReference databaseReference;
     // La référence vers l'utilisateur courant
     private FirebaseUser currentUser;
@@ -60,7 +67,7 @@ public class FindFriendsFragment extends Fragment {
     String avatar;
 
     public FindFriendsFragment() {
-        // Required empty public constructor
+        // Required empty public constructor !!
     }
 
 
@@ -99,6 +106,7 @@ public class FindFriendsFragment extends Fragment {
 
         // Initialisation de la db Firebase avec le node USERS pour tous les récupérer
         databaseReference = FirebaseDatabase.getInstance().getReference().child(NodesNames.USERS);
+        friendRequestReference = FirebaseFirestore.getInstance().collection(NodesNames.FRIEND_REQUESTS);
 
         // Gestion de l'utilisateur courant
         currentUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -110,57 +118,67 @@ public class FindFriendsFragment extends Fragment {
         progressBar.setVisibility(View.VISIBLE);
 
         // De plus nous allons ordonner les résultats pour les afficher dans l'ordre Alphabéthique
-        Query query = databaseReference.orderByChild(NodesNames.NAME);
+        Query query = friendRequestReference.orderBy(NodesNames.NAME, Query.Direction.DESCENDING);
+//        Query query = databaseReference.orderByChild(NodesNames.NAME);
         // Ajout d'une query pour écouter le résultat et les afficher grace au snapshot
-        query.addValueEventListener(new ValueEventListener() {
+        query.addSnapshotListener(new EventListener<QuerySnapshot>() {
             @Override
-            public void onDataChange(@NonNull @NotNull DataSnapshot snapshot) {
-                // On commence par effacer la liste
-                findFriendModelList.clear();
-                // Puis on force l'affichage par ordre alphabétique
-                for (DataSnapshot ds : snapshot.getChildren()) {
-                    // On recherche dans le tableau crée par le snapshot tout les objets ds
-                    String userId = ds.getKey();
-                    // On retire l'utilisateur courant pour qu'il s'envoie pas de request
-                    if (userId.equals(currentUser.getUid()))
-                        return;
+            public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
 
-                    // On vérifie que le nom ne soit pas égale à null
-                    if (ds.child(NodesNames.NAME).getValue() != null) {
-                        // Alors on affiche la variable avec le nom complet de l'utilisateur
-                        String fullName = ds.child(NodesNames.NAME).getValue().toString();
-                        if (ds.child(NodesNames.AVATAR).getValue() != null) {
-                            // Penser à définir le String avatar en global
-                            avatar = ds.child(NodesNames.AVATAR).getValue().toString();
-                        } else {
-                            // On transforme le path du drawable en string
-                            avatar = "drawable://" + R.drawable.ic_user;
-                        }
-                        // On utilise le constructeur de findFriendModel pour ajouter les données
-                        // Ici il y a 4 attributs : fullName, avatar, userId et si l'on a envoyé une request
-                        // Pour le moment cette option sera laissé à False
-                        findFriendModelList.add(new FindFriendModel(fullName, avatar, userId, false));
-
-                        // On notifie à l'adpter que les données on changées
-                        findFriendAdapter.notifyDataSetChanged();
-
-                        // A partir d'ici on est sur d'avoir les données de la db donc on peut cacher le tvEmpty et la progressBar
-                        tvEmptyFriendList.setVisibility(View.GONE);
-                        progressBar.setVisibility(View.GONE);
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull @NotNull DatabaseError error) {
-                /** 4 Gestion des erreurs **/
-                progressBar.setVisibility(View.GONE);
-                // Affichage d'un Toast d'erreur
-                Toast.makeText(getContext(),
-                        getContext().getString(R.string.failed_to_fetch_friend, error.getMessage()),
-                        Toast.LENGTH_SHORT).show();
             }
         });
+
+// EN COURS DE MODIFICATION
+
+//                addValueEventListener(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(@NonNull @NotNull DataSnapshot snapshot) {
+//                // On commence par effacer la liste
+//                findFriendModelList.clear();
+//                // Puis on force l'affichage par ordre alphabétique
+//                for (DataSnapshot ds : snapshot.getChildren()) {
+//                    // On recherche dans le tableau crée par le snapshot tout les objets ds
+//                    String userId = ds.getKey();
+//                    // On retire l'utilisateur courant pour qu'il s'envoie pas de request
+//                    if (userId.equals(currentUser.getUid()))
+//                        return;
+//
+//                    // On vérifie que le nom ne soit pas égale à null
+//                    if (ds.child(NodesNames.NAME).getValue() != null) {
+//                        // Alors on affiche la variable avec le nom complet de l'utilisateur
+//                        String fullName = ds.child(NodesNames.NAME).getValue().toString();
+//                        if (ds.child(NodesNames.AVATAR).getValue() != null) {
+//                            // Penser à définir le String avatar en global
+//                            avatar = ds.child(NodesNames.AVATAR).getValue().toString();
+//                        } else {
+//                            // On transforme le path du drawable en string
+//                            avatar = "drawable://" + R.drawable.ic_user;
+//                        }
+//                        // On utilise le constructeur de findFriendModel pour ajouter les données
+//                        // Ici il y a 4 attributs : fullName, avatar, userId et si l'on a envoyé une request
+//                        // Pour le moment cette option sera laissé à False
+//                        findFriendModelList.add(new FindFriendModel(fullName, avatar, userId, false));
+//
+//                        // On notifie à l'adpter que les données on changées
+//                        findFriendAdapter.notifyDataSetChanged();
+//
+//                        // A partir d'ici on est sur d'avoir les données de la db donc on peut cacher le tvEmpty et la progressBar
+//                        tvEmptyFriendList.setVisibility(View.GONE);
+//                        progressBar.setVisibility(View.GONE);
+//                    }
+//                }
+//            }
+//
+//            @Override
+//            public void onCancelled(@NonNull @NotNull DatabaseError error) {
+//                /** 4 Gestion des erreurs **/
+//                progressBar.setVisibility(View.GONE);
+//                // Affichage d'un Toast d'erreur
+//                Toast.makeText(getContext(),
+//                        getContext().getString(R.string.failed_to_fetch_friend, error.getMessage()),
+//                        Toast.LENGTH_SHORT).show();
+//            }
+//        });
 
     }
 }

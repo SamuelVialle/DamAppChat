@@ -43,7 +43,6 @@ public class LoginActivity extends AppCompatActivity {
 
         // 8.1 Initialisation de la progressBar
         progressBar = findViewById(R.id.progressBar);
-
     }
 
     @Override
