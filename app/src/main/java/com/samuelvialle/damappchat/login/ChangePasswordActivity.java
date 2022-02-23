@@ -16,7 +16,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.samuelvialle.damappchat.Common.Util;
+import com.samuelvialle.damappchat.common.Util;
 import com.samuelvialle.damappchat.NoInternetActivity;
 import com.samuelvialle.damappchat.R;
 

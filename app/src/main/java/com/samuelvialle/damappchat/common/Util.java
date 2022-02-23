@@ -1,4 +1,4 @@
-package com.samuelvialle.damappchat.Common;
+package com.samuelvialle.damappchat.common;
 
 import android.content.Context;
 import android.net.ConnectivityManager;

@@ -17,7 +17,7 @@ composée de blocs réutilisables dans vos futurs créations :
     - Changer le nom des var pour que ça concorde avec material.io
     - Choix d'un icône sur le site flaticon.com
     - Télécharger le SVG pour ic_launcher_foreground
-    - Télécharger le png (en 100x100) pour utiulisation futur
+    - Télécharger le png (en 100x100) pour utilisation futur
 
 #Les pages de login
 Ajout d'un package pour contenir toutes les pages du login

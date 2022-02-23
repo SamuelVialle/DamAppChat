@@ -1,5 +1,7 @@
 package com.samuelvialle.damappchat.profile;
 
+import static com.samuelvialle.damappchat.common.Constants.*;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -31,22 +33,18 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import com.samuelvialle.damappchat.Common.NodesNames;
 import com.samuelvialle.damappchat.R;
 import com.samuelvialle.damappchat.login.ChangePasswordActivity;
 import com.samuelvialle.damappchat.login.LoginActivity;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.HashMap;
 
 public class ProfileActivity extends AppCompatActivity {
@@ -102,7 +100,7 @@ public class ProfileActivity extends AppCompatActivity {
         /** 6.2 Insertion dans la base de données **/
         userReference = FirebaseFirestore
                 .getInstance() // Obtient une instance de connexion à la db
-                .collection(NodesNames.USERS) // Cherche la référence souhaitée à partir de la racine de la db
+                .collection(USERS) // Cherche la référence souhaitée à partir de la racine de la db
                 .document(userID);// L'id de l'utilisateur courant pour être modifié
         Log.i(TAG, "initFirebase: " + userID);
     }
@@ -139,7 +137,7 @@ public class ProfileActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login_profile);
-
+        //TODO Ajouter le bouton retour dans la toolbar
         /** 4 Appel des méthodes d'initialisation **/
         initUI();
         initFirebase();
@@ -177,11 +175,11 @@ public class ProfileActivity extends AppCompatActivity {
                             // Insertion dans la bd à l'aide d'un hashmap
                             HashMap<String, Object> hashMap = new HashMap<>();
                             if (firebaseUser.getDisplayName() != nameToUpdate) {
-                                hashMap.put(NodesNames.NAME, nameToUpdate);
+                                hashMap.put(NAME, nameToUpdate);
                             }
                             if (firebaseUser.getEmail() != emailToUpdate) {
                                 // TODO setEmail dans Authenticator, car dans cette configuration l'email ne change que dans la db
-                                hashMap.put(NodesNames.EMAIL, emailToUpdate);
+                                hashMap.put(EMAIL, emailToUpdate);
                             }
 
                             // Envoie des données vers la db
@@ -241,13 +239,13 @@ public class ProfileActivity extends AppCompatActivity {
                                                         HashMap<String, Object> hashMap = new HashMap<>();
                                                         // Testing var to update
                                                         if (firebaseUser.getDisplayName() != nameToUpdate) {
-                                                            hashMap.put(NodesNames.NAME, nameToUpdate);
+                                                            hashMap.put(NAME, nameToUpdate);
                                                         } else if (firebaseUser.getEmail() != emailToUpdate) {
                                                             // TODO setEmail ...
-                                                            hashMap.put(NodesNames.EMAIL, etEmail.getText().toString().trim());
+                                                            hashMap.put(EMAIL, etEmail.getText().toString().trim());
                                                         }
 
-                                                        hashMap.put(NodesNames.AVATAR, serverFileUri.getPath());
+                                                        hashMap.put(AVATAR, serverFileUri.getPath());
 
                                                         userReference.set(hashMap, SetOptions.merge())
                                                                 .addOnCompleteListener(ProfileActivity.this, new OnCompleteListener<Void>() {
@@ -404,7 +402,7 @@ public class ProfileActivity extends AppCompatActivity {
 
                             HashMap<String, String> hashMap = new HashMap<>();
                             // On rempli la base Users avec du vide
-                            hashMap.put(NodesNames.AVATAR, "");
+                            hashMap.put(AVATAR, "");
 
                             userReference.set(hashMap, SetOptions.merge())
                                     .addOnCompleteListener(ProfileActivity.this, new OnCompleteListener<Void>() {

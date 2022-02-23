@@ -64,7 +64,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:hint="@string/enter_email"
-                    android:inputType="text"/>
+                    android:inputType="textEmailAddress"/>
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -79,7 +79,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="textPassword"
-                    android:hint="@string/enter_password" />
+                    android:hint="@string/enter_password"
+                    android:imeOptions="actionDone"/>
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -90,7 +91,7 @@
                 android:layout_marginTop="8dp"
                 android:onClick="btnLoginClick"
                 android:text="@string/login"
-                android:imeOptions="actionDone"/>
+                />
 
             <TextView
                 android:id="@+id/tvResetPassword"
@@ -130,7 +131,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:onClick="tvSignupClick"
+            android:onClick="btnSignupClick"
             android:paddingStart="8dp"
             android:text="@string/signup"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium"

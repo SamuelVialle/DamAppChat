@@ -1,6 +1,17 @@
 package com.samuelvialle.damappchat.findfriends;
 
+import static com.samuelvialle.damappchat.common.Constants.CURRENT_USER;
+import static com.samuelvialle.damappchat.common.Constants.FIRESTORE_INSTANCE;
+import static com.samuelvialle.damappchat.common.Constants.FRIEND_REQUESTS;
+import static com.samuelvialle.damappchat.common.Constants.NAME;
+import static com.samuelvialle.damappchat.common.Constants.USERS;
+
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -8,42 +19,36 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import com.google.firebase.FirebaseOptions;
-import com.google.firebase.auth.FirebaseAuth;
+import com.firebase.ui.firestore.FirestoreRecyclerOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.EventListener;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.samuelvialle.damappchat.Common.NodesNames;
 import com.samuelvialle.damappchat.R;
+import com.samuelvialle.damappchat.login.SignupActivity;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * 1 Suppression des données sauf du constructeur
  **/
 public class FindFriendsFragment extends Fragment {
 
+
     /**
      * 2 Ajouts des variables globales
      **/
+    // La vue pour les éléments
+    private View view;       // Permet son utilisation dans la méthode init ;)
     // Le recyclerView
     private RecyclerView rvFindFriends;
     // L'adapter pour faire le lien entre les données de FB et le design
@@ -54,10 +59,11 @@ public class FindFriendsFragment extends Fragment {
     private TextView tvEmptyFriendList;
 
     // Les variables pour la connextion à la db
-    // La référence vers la collection
-    private CollectionReference friendRequestReference;
-    private DatabaseReference databaseReference;
-    // La référence vers l'utilisateur courant
+    // La référence vers les collections
+    private CollectionReference usersCollectionReference; // La base Users pour récupérer les informations
+    private CollectionReference friendRequestCollectionReference; // La base friendRequest
+
+    // La référence de l'utilisateur courant
     private FirebaseUser currentUser;
 
     // La progressBar
@@ -70,6 +76,24 @@ public class FindFriendsFragment extends Fragment {
         // Required empty public constructor !!
     }
 
+    private void initUI() {
+        // Initialisation des vues (lien design // code )
+        rvFindFriends = view.findViewById(R.id.rvFindFriends);
+        progressBar = view.findViewById(R.id.progressBar);
+        tvEmptyFriendList = view.findViewById(R.id.tvEmptyFriendList);
+
+        // Initialisation du recyclerView en utilisant le layoutManager pour ajouter des lignes automatiquements dans le recycler
+        rvFindFriends.setLayoutManager(new LinearLayoutManager(getActivity()));
+    }
+
+    private void initFB() {
+        // Gestion de l'utilisateur courant
+        currentUser = CURRENT_USER;
+
+        // Initialisation des bases
+        usersCollectionReference = FIRESTORE_INSTANCE.collection(USERS);
+        friendRequestCollectionReference = FIRESTORE_INSTANCE.collection(FRIEND_REQUESTS);
+    }
 
     /**
      * 2 On ne change rien dans la vue tout convient pour l'affichage
@@ -78,7 +102,8 @@ public class FindFriendsFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_find_friends, container, false);
+        view = inflater.inflate(R.layout.fragment_find_friends, container, false);
+        return view;
     }
 
     /**
@@ -88,28 +113,8 @@ public class FindFriendsFragment extends Fragment {
     public void onViewCreated(@NonNull @NotNull View view, @Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Initialisation des vues (lien design // code )
-        rvFindFriends = view.findViewById(R.id.rvFindFriends);
-        progressBar = view.findViewById(R.id.progressBar);
-        tvEmptyFriendList = view.findViewById(R.id.tvEmptyFriendList);
-
-        // Initialisation du recyclerView en utilisant le layoutManager pour ajouter des lignes automatiquements dans le recycler
-        rvFindFriends.setLayoutManager(new LinearLayoutManager(getActivity()));
-
-        // Initialisation de la liste
-        findFriendModelList = new ArrayList<>();
-        // Initialisation de l'adapter à partir la liste
-        findFriendAdapter = new FindFriendAdapter(getActivity(), findFriendModelList);
-
-        // Association de la liste au Recycler grace à l'adapter
-        rvFindFriends.setAdapter(findFriendAdapter);
-
-        // Initialisation de la db Firebase avec le node USERS pour tous les récupérer
-        databaseReference = FirebaseDatabase.getInstance().getReference().child(NodesNames.USERS);
-        friendRequestReference = FirebaseFirestore.getInstance().collection(NodesNames.FRIEND_REQUESTS);
-
-        // Gestion de l'utilisateur courant
-        currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        initUI();
+        initFB();
 
         // Initialisation du textView en cas de liste vide
         tvEmptyFriendList.setVisibility(View.VISIBLE);
@@ -117,68 +122,49 @@ public class FindFriendsFragment extends Fragment {
         // Initialisation de la progressBar pour la rendre visible le temps de la recherche dans la base
         progressBar.setVisibility(View.VISIBLE);
 
-        // De plus nous allons ordonner les résultats pour les afficher dans l'ordre Alphabéthique
-        Query query = friendRequestReference.orderBy(NodesNames.NAME, Query.Direction.DESCENDING);
-//        Query query = databaseReference.orderByChild(NodesNames.NAME);
-        // Ajout d'une query pour écouter le résultat et les afficher grace au snapshot
-        query.addSnapshotListener(new EventListener<QuerySnapshot>() {
-            @Override
-            public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
+        // Appel de la méthode pour afficher les données des users dans le recyclerView
+        getUsers();
+    }
 
-            }
-        });
+    Query queryUsersCollection;
 
-// EN COURS DE MODIFICATION
+    private void getUsers() {
+        // Query de tout les utilisateurs pour les afficher dans le recyclerView
+        queryUsersCollection = usersCollectionReference
+                .orderBy(NAME, Query.Direction.ASCENDING);
 
-//                addValueEventListener(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(@NonNull @NotNull DataSnapshot snapshot) {
-//                // On commence par effacer la liste
-//                findFriendModelList.clear();
-//                // Puis on force l'affichage par ordre alphabétique
-//                for (DataSnapshot ds : snapshot.getChildren()) {
-//                    // On recherche dans le tableau crée par le snapshot tout les objets ds
-//                    String userId = ds.getKey();
-//                    // On retire l'utilisateur courant pour qu'il s'envoie pas de request
-//                    if (userId.equals(currentUser.getUid()))
-//                        return;
-//
-//                    // On vérifie que le nom ne soit pas égale à null
-//                    if (ds.child(NodesNames.NAME).getValue() != null) {
-//                        // Alors on affiche la variable avec le nom complet de l'utilisateur
-//                        String fullName = ds.child(NodesNames.NAME).getValue().toString();
-//                        if (ds.child(NodesNames.AVATAR).getValue() != null) {
-//                            // Penser à définir le String avatar en global
-//                            avatar = ds.child(NodesNames.AVATAR).getValue().toString();
-//                        } else {
-//                            // On transforme le path du drawable en string
-//                            avatar = "drawable://" + R.drawable.ic_user;
-//                        }
-//                        // On utilise le constructeur de findFriendModel pour ajouter les données
-//                        // Ici il y a 4 attributs : fullName, avatar, userId et si l'on a envoyé une request
-//                        // Pour le moment cette option sera laissé à False
-//                        findFriendModelList.add(new FindFriendModel(fullName, avatar, userId, false));
-//
-//                        // On notifie à l'adpter que les données on changées
-//                        findFriendAdapter.notifyDataSetChanged();
-//
-//                        // A partir d'ici on est sur d'avoir les données de la db donc on peut cacher le tvEmpty et la progressBar
-//                        tvEmptyFriendList.setVisibility(View.GONE);
-//                        progressBar.setVisibility(View.GONE);
-//                    }
-//                }
-//            }
-//
-//            @Override
-//            public void onCancelled(@NonNull @NotNull DatabaseError error) {
-//                /** 4 Gestion des erreurs **/
-//                progressBar.setVisibility(View.GONE);
-//                // Affichage d'un Toast d'erreur
-//                Toast.makeText(getContext(),
-//                        getContext().getString(R.string.failed_to_fetch_friend, error.getMessage()),
-//                        Toast.LENGTH_SHORT).show();
-//            }
-//        });
 
+        // Gestion de l'affichage des données dans le RecyclerView
+        FirestoreRecyclerOptions<FindFriendModel> findFriendModelFirestoreRecyclerOptions =
+                new FirestoreRecyclerOptions.Builder<FindFriendModel>()
+                        .setQuery(queryUsersCollection, FindFriendModel.class)
+                        .build();
+        findFriendAdapter = new FindFriendAdapter(findFriendModelFirestoreRecyclerOptions);
+        rvFindFriends.setAdapter(findFriendAdapter);
+        findFriendAdapter.startListening();
+
+
+
+
+        // Gestion de l'affichage du message si la base n'est pas vide
+        tvEmptyFriendList.setVisibility(View.GONE);
+        // Gestion de l'affichage de la progressBar
+        progressBar.setVisibility(View.GONE);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (CURRENT_USER == null) {
+            startActivity(new Intent(getActivity(), SignupActivity.class));
+        } else {
+            findFriendAdapter.startListening();
+        }
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        findFriendAdapter.stopListening();
     }
 }

@@ -1,9 +1,12 @@
 package com.samuelvialle.damappchat.login;
 
+import static com.samuelvialle.damappchat.common.Constants.*;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.content.Intent;
@@ -17,12 +20,10 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.AuthResult;
@@ -30,109 +31,69 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreSettings;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import com.samuelvialle.damappchat.Common.NodesNames;
-import com.samuelvialle.damappchat.Common.Util;
+import com.samuelvialle.damappchat.common.Util;
 import com.samuelvialle.damappchat.NoInternetActivity;
 import com.samuelvialle.damappchat.R;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.HashMap;
 
 public class SignupActivity extends AppCompatActivity {
     private static final String TAG = "SignupActivity";
-    /**
-     * 1 Variables globales
-     **/
+    //1 Variables globales
     private TextInputEditText etName, etEmail, etPassword, etConfirmPassword;
     private String name, email, password, confirmPassword;
-
-    /**
-     * 5.1 Ajout de la variable FirebaseUser
-     */
+    //5.1 Ajout de la variable FirebaseUser
     private FirebaseUser firebaseUser;
-    /**
-     * 6.1 Ajout de la variable de liaison avec les collections du Cloud FireStore
-     **/
+    //6.1 Ajout de la variable de liaison avec les collections du Cloud FireStore
     private CollectionReference collectionReference; // Le reste est dans la méthode initFireStore
-    /**
-     * 7.1 Ajout de la variable de liaison avec FirebaseStorage
-     **/
+    //7.1 Ajout de la variable de liaison avec FirebaseStorage
     private StorageReference fileStorage;
-    /**
-     * 7.5 Variables des Uri du fichier image de l'avatar utilisateur
-     */
+    //7.5 Variables des Uri du fichier image de l'avatar utilisateur
     private Uri localFileUri; // L'Uri du fichier sur le terminal
-    private Uri serverFileUri; // L'urL du fichier stocké dans le storage (on parle bien ici d'un U R L (ELLE))
-    /**
-     * 7.6 Variable pour la localisation de l'ImageView
-     */
-    private ImageView ivAvatar;
+    private Uri serverFileUri; // L'UrL du fichier stocké dans le storage (on parle bien ici d'un U R L (ELLE))
+    private String urlStorageAvatar; // Le String de l'url stocké dans le storage pour l'ajouter dans la base Users
+    //7.6 Variable pour la localisation de l'ImageView
+    private ImageView ivAddAvatar;
     private String userID;
-    /**
-     * 11 Ajout de la progressBar
-     **/
+    //11 Ajout de la progressBar
     private View progressBar;
 
-    /**
-     * 2 Méthode initUI pour faire le lien entre le design et le code
-     **/
+    //2 Méthode initUI pour faire le lien entre le design et le code
     public void initUI() {
         etName = findViewById(R.id.etName);
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
         etConfirmPassword = findViewById(R.id.etConfirmPassword);
         /** 7.6 Bis lien avec le design **/
-        ivAvatar = findViewById(R.id.ivAvatar);
+        ivAddAvatar = findViewById(R.id.ivAddAvatar);
         /** 11.1 Init ProgressBar **/
         progressBar = findViewById(R.id.progressBar);
     }
 
-    private void initFirebase(){
+    //6 Méthode initFirebase pour initialiser les composants de Firebase
+    private void initFirebase() {
         /** 6.2 Insertion dans Firestore **/
-        collectionReference = FirebaseFirestore
-                .getInstance() // Obtient une instance de connexion à la db
-                .collection(NodesNames.USERS); // La référence equi vient de la classe NodesNames
-    }
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login_signup);
-        /** 3 Appel de la méthode initUI **/
-        initUI();
-        initFirebase();
+        collectionReference = FIRESTORE_INSTANCE.collection(USERS); // Instance définie dans la classe des constantes
 
         /** 7.2 Initialisation du bucket pour le stockage des avatars utilisateurs **/
-        fileStorage = FirebaseStorage.getInstance().getReference();
-
-        /** 12.2 Association du clic dans le keyboard **/
-        etConfirmPassword.setOnEditorActionListener(editorActionListener);
+        fileStorage = STORAGE_INSTANCE.getReference();
     }
 
-    /**
-     * 4 Méthode pour la gestion du click sur le bouton directement via la méthode onClick du xml
-     * et ajout des vérifications suivantes :
-     * - Nom non vide
-     * - Mail correct
-     * - Password non vide et comprenant au minimum 6 caractères
-     * - Vérification du password avec confirmpassword pour un match identique
-     **/
+    //4 Méthode pour la gestion du clic du bouton signUp
     public void btnSignupClick(View v) {
         name = etName.getText().toString().trim();
         email = etEmail.getText().toString().trim();
         password = etPassword.getText().toString().trim();
         confirmPassword = etConfirmPassword.getText().toString().trim();
 
-        // Les vérifications
-        // Si les cases sont vides
+        //4.1 Les vérifications
+        //4.1.1 Si les cases sont vides
         if (name.equals("")) {
             etName.setError(getString(R.string.enter_name));
         } else if (email.equals("")) {
@@ -142,15 +103,15 @@ public class SignupActivity extends AppCompatActivity {
         } else if (confirmPassword.equals("")) {
             etConfirmPassword.setError(getString(R.string.confirm_password));
         }
-        // Les patterns pour vérifier si il s'agit bien d'un email
+        //4.1.2 Les patterns pour vérifier si il s'agit bien d'un email
         else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             etName.setError(getString(R.string.enter_correct_email));
         }
-        // Vérification password identique
+        //4.1.3 Vérification password identique
         else if (!password.equals(confirmPassword)) {
             etConfirmPassword.setError(getString(R.string.password_mismatch));
         }
-        // Si toutes les vérifications sont validées, il est possible de s'enregistrer
+        //4.2 Si toutes les vérifications sont validées, il est possible de s'enregistrer
         else {
             // 12 Ajout de la vérification de la connection internet
             if (Util.connectionAvailable(this)) // Si la connexion fonctionne
@@ -237,10 +198,10 @@ public class SignupActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             // Création du HashMap pour la gestion des données
                             HashMap<String, String> hashMap = new HashMap<>();
-                            hashMap.put(NodesNames.NAME, etName.getText().toString().trim());
-                            hashMap.put(NodesNames.EMAIL, etEmail.getText().toString().trim());
-                            hashMap.put(NodesNames.ONLINE, "true"); // User set ONLINE, true, car il est dans on profile
-                            hashMap.put(NodesNames.AVATAR, ""); // Vide pour le moment
+                            hashMap.put(NAME, etName.getText().toString().trim());
+                            hashMap.put(EMAIL, etEmail.getText().toString().trim());
+                            hashMap.put(ONLINE, "true"); // User set ONLINE, true, car il est dans on profile
+                            hashMap.put(AVATAR, ""); // Vide pour le moment
                             Log.i(TAG, "Name only " + userID);
                             // 11.7 ProgressBar
                             progressBar.setVisibility(View.VISIBLE);
@@ -273,64 +234,66 @@ public class SignupActivity extends AppCompatActivity {
                 });
     }
 
-    /**
-     * 7.3 Ajout de la méthode pour la gestion de l'avatar de l'utilisateur
-     * Ne pas oublier de la lier à l'imageView dans le XML
-     **/
-    public void pickImage(View v) {
-        /**
-         *  9 Ajout de la vérification de la permission de parcourir les dossiers du terminal
-         * Avant toute chose il faut ajouter la permission dans le manifest
-         **/
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-                == PackageManager.PERMISSION_GRANTED) {
-            // Ajout de l'intent qui va ouvrir la galerie du terminal pour choisir un photo : Intent.ACTION_PICK
-            // Il faut ensuite ajouter l'espace de stockage dans lequel recherché, ici les images stockées sur tout le terminal
-            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-            // On demande de démarré l'activité avec un résultat, en effet il faut récupérer l'URL de l'espace de stockage (Storage)
-            // de l'image pour le recopier dans notre base de données Users
-            startActivityForResult(intent, 101);
-            // A noter que le request code peut-être n'importe quoi, il n'y en a un qu'un seul dans cette activité
-        } else {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                    102);
-        }
-    }
+//    /**
+//     * 7.3 Ajout de la méthode pour la gestion de l'avatar de l'utilisateur
+//     * Ne pas oublier de la lier à l'imageView dans le XML
+//     **/
+//    public void pickImage(View v) {
+//        /**
+//         *  9 Ajout de la vérification de la permission de parcourir les dossiers du terminal
+//         * Avant toute chose il faut ajouter la permission dans le manifest
+//         **/
+//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+//                == PackageManager.PERMISSION_GRANTED) {
+//            // Ajout de l'intent qui va ouvrir la galerie du terminal pour choisir un photo : Intent.ACTION_PICK
+//            // Il faut ensuite ajouter l'espace de stockage dans lequel recherché, ici les images stockées sur tout le terminal
+//            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+//            // On demande de démarré l'activité avec un résultat, en effet il faut récupérer l'URL de l'espace de stockage (Storage)
+//            // de l'image pour le recopier dans notre base de données Users
+//            startActivityForResult(intent, 101);
+//            // A noter que le request code peut-être n'importe quoi, il n'y en a un qu'un seul dans cette activité
+//        } else {
+//            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+//                    102);
+//        }
+//    }
+//
+//    /**
+//     * 10 Ajout de la méthode pour vérifier si l'on à la permission ou non
+//     **/
+//    @Override
+//    public void onRequestPermissionsResult(int requestCode, @NonNull @NotNull String[] permissions, @NonNull @NotNull int[] grantResults) {
+//        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+//        if (requestCode == 102) {
+//            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+//                startActivityForResult(intent, 101);
+//            } else {
+//                Toast.makeText(this, R.string.access_permission_is_required, Toast.LENGTH_SHORT).show();
+//            }
+//        }
+//    }
+//
+//    /**
+//     * 7.4 Action à effectuée en résultat de la méthode pickImage()
+//     **/
+//    @Override
+//    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+//        super.onActivityResult(requestCode, resultCode, data);
+//        // Vérifications
+//        // Le requestCode renvoyé est-il le bon ?
+//        if (requestCode == 101) {
+//            // Il y'a bien eu sélection d'image (sinon resultcode = RESULT_CANCELED)
+//            if (resultCode == RESULT_OK) {
+//                // Ajout des variables globales des uri cf 7.5
+//                localFileUri = data.getData();
+//                // Affectation de l'image sélectionnée à l'avatar (pour la variable globale cf 7.5)
+//                ivAddAvatar.setImageURI(localFileUri);
+//            }
+//        }
+//    }
 
-    /**
-     * 10 Ajout de la méthode pour vérifier si l'on à la permission ou non
-     **/
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull @NotNull String[] permissions, @NonNull @NotNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 102) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                startActivityForResult(intent, 101);
-            } else {
-                Toast.makeText(this, R.string.access_permission_is_required, Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
 
-    /**
-     * 7.4 Action à effectuée en résultat de la méthode pickImage()
-     **/
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        // Vérifications
-        // Le requestCode renvoyé est-il le bon ?
-        if (requestCode == 101) {
-            // Il y'a bien eu sélection d'image (sinon resultcode = RESULT_CANCELED)
-            if (resultCode == RESULT_OK) {
-                // Ajout des variables globales des uri cf 7.5
-                localFileUri = data.getData();
-                // Affectation de l'image sélectionnée à l'avatar (pour la variable globale cf 7.5)
-                ivAvatar.setImageURI(localFileUri);
-            }
-        }
-    }
 
     /**
      * 7.7 Ajout de la méthode pour uploader l'image sur le storage et récupérer son URL pour remplir la db Users
@@ -351,11 +314,13 @@ public class SignupActivity extends AppCompatActivity {
                         progressBar.setVisibility(View.GONE);
                         if (task.isSuccessful()) {
                             // On récupére l'url de l'image uploadée
-                            fileRef.getDownloadUrl().addOnSuccessListener(SignupActivity.this,
-                                    new OnSuccessListener<Uri>() {
+                            fileRef.getDownloadUrl()
+                                    .addOnCompleteListener(SignupActivity.this, new OnCompleteListener<Uri>() {
                                         @Override
-                                        public void onSuccess(Uri uri) {
-                                            serverFileUri = uri;
+                                        public void onComplete(@NonNull Task<Uri> task) {
+                                            serverFileUri = task.getResult();
+                                            urlStorageAvatar = serverFileUri.toString();
+
                                             UserProfileChangeRequest request = new UserProfileChangeRequest.Builder()
                                                     .setDisplayName(etName.getText().toString().trim())
                                                     .setPhotoUri(serverFileUri)
@@ -370,12 +335,11 @@ public class SignupActivity extends AppCompatActivity {
 
                                                                 HashMap<String, String> hashMap = new HashMap<>();
 
-                                                                hashMap.put(NodesNames.NAME, etName.getText().toString().trim());
-                                                                hashMap.put(NodesNames.EMAIL, etEmail.getText().toString().trim());
-                                                                hashMap.put(NodesNames.ONLINE, "true");
-                                                                hashMap.put(NodesNames.AVATAR, serverFileUri.getPath());
+                                                                hashMap.put(NAME, etName.getText().toString().trim());
+                                                                hashMap.put(EMAIL, etEmail.getText().toString().trim());
+                                                                hashMap.put(ONLINE, "true");
+                                                                hashMap.put(AVATAR, urlStorageAvatar);
 
-                                                                Log.i(TAG, "Name and picture : " + userID);
 
                                                                 collectionReference.document(userID).set(hashMap)
                                                                         .addOnCompleteListener(SignupActivity.this, new OnCompleteListener<Void>() {
@@ -392,12 +356,14 @@ public class SignupActivity extends AppCompatActivity {
                                                             }
                                                         }
                                                     });
+
                                         }
                                     });
                         }
                     }
                 });
     }
+
 
     /**
      * 12 Ajout des boutons next et send à la place du retour chariot du keyboard
@@ -414,4 +380,16 @@ public class SignupActivity extends AppCompatActivity {
         }
     };
 
+    //========== CYCLES DE VIE ==========//
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_login_signup);
+        //3 Appel de la méthode initUI
+        initUI();
+        initFirebase();
+        /** 12.2 Association du clic dans le keyboard **/
+        etConfirmPassword.setOnEditorActionListener(editorActionListener);
+    }
+    //========== END CYCLES DE VIE ==========//
 }

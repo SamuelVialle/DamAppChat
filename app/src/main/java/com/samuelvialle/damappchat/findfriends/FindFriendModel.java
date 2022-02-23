@@ -1,11 +1,11 @@
 package com.samuelvialle.damappchat.findfriends;
 
 public class FindFriendModel {
+    private static boolean requestSent;
     /** 1 Ajout des variables **/
-    private String UserName;
-    private String Avatar;
-    private String UserId;
-    private boolean requestSent;
+    private String name;
+    private String avatar;
+    private String userId;
 
     /** 2 Géneration des constructeurs **/
 
@@ -14,39 +14,40 @@ public class FindFriendModel {
     }
 
     // 2.2 Un constructeur avec nos variables
-    public FindFriendModel(String userName, String avatar, String userId, boolean requestSent) {
-        UserName = userName;
-        Avatar = avatar;
-        UserId = userId;
+    public FindFriendModel(String name, String avatar, String userId, boolean requestSent) {
+        this.name = name;
+        this.avatar = avatar;
+        this.userId = userId;
         this.requestSent = requestSent;
     }
 
+
     /** 3 Création des getter et setters **/
-    public String getUserName() {
-        return UserName;
+    public String getName() {
+        return name;
     }
 
-    public void setUserName(String userName) {
-        UserName = userName;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getAvatar() {
-        return Avatar;
+        return avatar;
     }
 
     public void setAvatar(String avatar) {
-        Avatar = avatar;
+        this.avatar = avatar;
     }
 
     public String getUserId() {
-        return UserId;
+        return userId;
     }
 
     public void setUserId(String userId) {
-        UserId = userId;
+        this.userId = userId;
     }
 
-    public boolean isRequestSent() {
+    public static boolean isRequestSent() {
         return requestSent;
     }
 

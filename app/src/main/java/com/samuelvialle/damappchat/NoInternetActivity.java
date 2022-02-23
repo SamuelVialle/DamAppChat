@@ -10,11 +10,10 @@ import android.net.NetworkRequest;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.samuelvialle.damappchat.Common.Util;
+import com.samuelvialle.damappchat.common.Util;
 
 public class NoInternetActivity extends AppCompatActivity {
     /** On vérifie si il ya une connexion internet valide
